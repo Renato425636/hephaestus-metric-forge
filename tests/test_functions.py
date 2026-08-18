@@ -1,8 +1,27 @@
+"""Contract-level tests for the `functions` resource: catalog shape, routing,
+and generic error handling that isn't specific to any one function.
+
+Per-item behavior (happy path, dtype/param validation, edge cases) lives in
+the `tests/test_functions_*.py` category files, one per catalog category.
+"""
+
 from __future__ import annotations
 
-import json
-
 from fastapi.testclient import TestClient
+
+_EXPECTED_FUNCTION_NAMES = {
+    "dedupe",
+    "drop_nulls",
+    "fill_nulls",
+    "trim_whitespace",
+    "normalize_case",
+    "groupby_agg",
+    "pivot",
+    "melt",
+    "cast_dtype",
+    "bucketize",
+    "normalize",
+}
 
 
 def test_list_functions_catalog(client: TestClient) -> None:
@@ -10,61 +29,9 @@ def test_list_functions_catalog(client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     names = {item["name"] for item in body}
-    assert {"dedupe", "groupby", "normalize"} <= names
+    assert names >= _EXPECTED_FUNCTION_NAMES
     for item in body:
         assert "applicable_dtypes" in item
-
-
-def test_dedupe_counts_duplicates(client: TestClient) -> None:
-    payload = {
-        "data": [{"id": 1}, {"id": 1}, {"id": 2}, {"id": 3}, {"id": 3}],
-        "columns": ["id"],
-        "params": {},
-    }
-    response = client.post("/functions/dedupe", json=payload)
-    assert response.status_code == 200
-    results = response.json()
-    assert results == [{"column": "id", "function": "dedupe", "value": 2, "error": None}]
-
-
-def test_groupby_default_counts_groups(client: TestClient) -> None:
-    payload = {
-        "data": [{"category": "a"}, {"category": "a"}, {"category": "b"}],
-        "columns": ["category"],
-        "params": {},
-    }
-    response = client.post("/functions/groupby", json=payload)
-    assert response.status_code == 200
-    results = response.json()
-    assert results[0]["value"] == 2
-    assert results[0]["error"] is None
-
-
-def test_normalize_minmax(client: TestClient) -> None:
-    payload = {
-        "data": [{"amount": 0.0}, {"amount": 5.0}, {"amount": 10.0}],
-        "columns": ["amount"],
-        "params": {"method": "minmax"},
-    }
-    response = client.post("/functions/normalize", json=payload)
-    assert response.status_code == 200
-    results = response.json()
-    assert results[0]["error"] is None
-    normalized = json.loads(results[0]["value"])
-    assert normalized == [0.0, 0.5, 1.0]
-
-
-def test_normalize_on_string_column_is_not_applicable(client: TestClient) -> None:
-    payload = {
-        "data": [{"name": "alice"}, {"name": "bob"}],
-        "columns": ["name"],
-        "params": {},
-    }
-    response = client.post("/functions/normalize", json=payload)
-    assert response.status_code == 200
-    results = response.json()
-    assert results[0]["value"] is None
-    assert "not applicable" in results[0]["error"]
 
 
 def test_unknown_function_returns_404(client: TestClient) -> None:

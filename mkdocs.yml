@@ -1,0 +1,84 @@
+site_name: Hephaestus Metric Forge
+site_description: Stateless REST API for metrics/functions computation over tabular data (FastAPI + Polars)
+repo_name: hephaestus-metric-forge
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            show_source: true
+            show_root_heading: true
+            docstring_style: google
+            merge_init_into_class: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - getting-started/installation.md
+      - getting-started/authentication.md
+      - getting-started/quickstart.md
+  - Concepts:
+      - concepts/architecture.md
+      - concepts/functions-vs-metrics.md
+      - concepts/context-resolution.md
+  - Reference:
+      - Functions:
+          - reference/functions/dedupe.md
+          - reference/functions/drop_nulls.md
+          - reference/functions/fill_nulls.md
+          - reference/functions/trim_whitespace.md
+          - reference/functions/normalize_case.md
+          - reference/functions/groupby_agg.md
+          - reference/functions/pivot.md
+          - reference/functions/melt.md
+          - reference/functions/cast_dtype.md
+          - reference/functions/bucketize.md
+          - reference/functions/normalize.md
+      - Metrics:
+          - reference/metrics/balance.md
+          - reference/metrics/net_revenue.md
+          - reference/metrics/outlier_iqr.md
+          - reference/metrics/null_rate.md
+          - reference/metrics/cardinality.md
+          - reference/metrics/duplicate_rate.md
+          - reference/metrics/mean.md
+          - reference/metrics/median.md
+          - reference/metrics/stddev.md
+          - reference/metrics/percentile.md
+  - API: api/openapi.md
+  - Changelog: changelog.md

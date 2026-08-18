@@ -269,7 +269,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"data\": [\n    { \"amount\": 100.0 },\n    { \"amount\": 50.0 }\n  ],\n  \"columns\": [\"amount\"],\n  \"functions\": [\"balance\"],\n  \"context\": \"banking\",\n  \"params\": {\n    \"balance\": { \"reserve_ratio\": 0.2 }\n  }\n}",
+              "raw": "{\n  \"data\": [\n    { \"amount\": 100.0 },\n    { \"amount\": 50.0 }\n  ],\n  \"columns\": [\"amount\"],\n  \"functions\": [\"balance\"],\n  \"context\": \"banking\",\n  \"params\": {\n    \"balance\": { \"pending_ratio\": 0.2 }\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"

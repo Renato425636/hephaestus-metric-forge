@@ -10,6 +10,8 @@ inline in the request and results come back in the same call.
 
 **Stack:** FastAPI · Polars · Pydantic v2 · Auth0 (OAuth2 Client Credentials)
 
+**Docs:** https://renato425636.github.io/hephaestus-metric-forge/
+
 ## What this is
 
 Two distinct resources, both dispatched through a **Strategy Pattern**

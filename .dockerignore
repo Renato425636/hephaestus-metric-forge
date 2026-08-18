@@ -1,0 +1,15 @@
+tests/
+.git/
+.github/
+postman/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.md
+.venv/
+venv/
+.env

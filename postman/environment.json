@@ -1,0 +1,49 @@
+{
+  "id": "b1e2f3a4-0000-4000-8000-metricsapienv",
+  "name": "Metrics API - Local/Cloud Run",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "auth0_domain",
+      "value": "your-tenant.auth0.com",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "auth0_client_id",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "auth0_client_secret",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "auth0_audience",
+      "value": "https://metrics-api",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "function_name",
+      "value": "dedupe",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

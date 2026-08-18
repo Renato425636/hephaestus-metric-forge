@@ -1,0 +1,428 @@
+{
+  "info": {
+    "_postman_id": "a9c1e2d0-0000-4000-8000-metricsapicoll",
+    "name": "Metrics API Collection",
+    "description": "Stateless metrics/functions computation API (FastAPI + Polars) secured via Auth0 OAuth2 Client Credentials (M2M). Run 'Auth' first to populate {{access_token}}; every other request reads it from the environment. Works against both localhost and a deployed Cloud Run URL — set base_url accordingly.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST {{auth0_domain}} oauth/token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grant_type\": \"client_credentials\",\n  \"client_id\": \"{{auth0_client_id}}\",\n  \"client_secret\": \"{{auth0_client_secret}}\",\n  \"audience\": \"{{auth0_audience}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://{{auth0_domain}}/oauth/token",
+              "protocol": "https",
+              "host": ["{{auth0_domain}}"],
+              "path": ["oauth", "token"]
+            },
+            "description": "M2M client-credentials token request. Auth0 issues the JWT; this API only validates it."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('response contains access_token', function () {",
+                  "    pm.expect(body).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "if (body.access_token) {",
+                  "    pm.environment.set('access_token', body.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ],
+      "description": "Runs first (default sequential order). Populates {{access_token}} for every other request in this collection."
+    },
+    {
+      "name": "Functions",
+      "item": [
+        {
+          "name": "GET /functions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/functions",
+              "host": ["{{base_url}}"],
+              "path": ["functions"]
+            },
+            "description": "Lists the `functions` catalog: name, applicable_dtypes, param_schema per registered strategy."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('body is an array', function () {",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    pm.expect(body.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('each item has name and applicable_dtypes', function () {",
+                  "    body.forEach(function (item) {",
+                  "        pm.expect(item).to.have.property('name');",
+                  "        pm.expect(item).to.have.property('applicable_dtypes');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST /functions/{{function_name}}",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"id\": 1 },\n    { \"id\": 1 },\n    { \"id\": 2 },\n    { \"id\": 3 },\n    { \"id\": 3 }\n  ],\n  \"columns\": [\"id\"],\n  \"params\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/functions/{{function_name}}",
+              "host": ["{{base_url}}"],
+              "path": ["functions", "{{function_name}}"]
+            },
+            "description": "Executes the `dedupe` function (default {{function_name}}) over an inline dataset's `id` column: expects 2 duplicate rows removable."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('response has expected result shape', function () {",
+                  "    pm.expect(body).to.be.an('array');",
+                  "    pm.expect(body[0]).to.have.property('value');",
+                  "    pm.expect(body[0].error).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test('dedupe value matches expected duplicate count', function () {",
+                  "    pm.expect(body[0].value).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "POST /metrics - valid case (default context)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"amount\": 100.0 },\n    { \"amount\": 50.0 }\n  ],\n  \"columns\": [\"amount\"],\n  \"functions\": [\"balance\"],\n  \"context\": \"default\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Numeric dataset, `balance` metric applicable in the default context."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('results[].error is null', function () {",
+                  "    body.forEach(function (item) {",
+                  "        pm.expect(item.error).to.be.null;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.environment.set('default_balance_value', body[0].value);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST /metrics - specific context (banking)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"amount\": 100.0 },\n    { \"amount\": 50.0 }\n  ],\n  \"columns\": [\"amount\"],\n  \"functions\": [\"balance\"],\n  \"context\": \"banking\",\n  \"params\": {\n    \"balance\": { \"reserve_ratio\": 0.2 }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Same metric name (`balance`) and dataset as the default-context request, but context=banking applies a reserve-ratio deduction — validates strategy dispatch by (metric_name, context)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "const defaultValue = pm.environment.get('default_balance_value');",
+                  "",
+                  "pm.test('results[].error is null', function () {",
+                  "    body.forEach(function (item) {",
+                  "        pm.expect(item.error).to.be.null;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('banking value differs from default-context value (strategy dispatch)', function () {",
+                  "    pm.expect(defaultValue, 'run the default-context request first').to.not.be.undefined;",
+                  "    pm.expect(body[0].value).to.not.eql(defaultValue);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST /metrics - invalid dtype",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"name\": \"alice\" },\n    { \"name\": \"bob\" }\n  ],\n  \"columns\": [\"name\"],\n  \"functions\": [\"balance\"],\n  \"context\": \"default\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "`balance` requires a numeric column; applying it to a string column must fail per-item, not the whole request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 (partial result, not a hard failure)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test(\"results[].error contains 'not applicable'\", function () {",
+                  "    pm.expect(body[0].error).to.include('not applicable');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "POST /metrics - no token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"amount\": 100.0 }\n  ],\n  \"columns\": [\"amount\"],\n  \"functions\": [\"balance\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "No Authorization header at all — must be rejected before any computation happens."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [],
+  "variable": []
+}

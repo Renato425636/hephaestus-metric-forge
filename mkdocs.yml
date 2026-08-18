@@ -4,6 +4,8 @@ repo_name: hephaestus-metric-forge
 
 theme:
   name: material
+  logo: assets/icon.svg
+  favicon: assets/favicon.png
   palette:
     - scheme: slate
       primary: deep orange
